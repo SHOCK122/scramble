@@ -8,8 +8,8 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
+  .Tile {
+    animation: Tile-spin 1 3.5s ease-out;
   }
 }
 
@@ -28,11 +28,18 @@
   color: #61dafb;
 }
 
-@keyframes App-logo-spin {
+@keyframes Tile-spin {
   from {
-    transform: rotate(0deg);
+    transform: rotate(0turn);
   }
   to {
-    transform: rotate(360deg);
+    transform: rotate(5turn);
   }
+}
+
+.Tile {
+  background-color: #8b6342;
+  width: 8em;
+  height: 8em;
+  justify-content: center;
 }

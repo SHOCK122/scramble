@@ -1,11 +1,18 @@
+import { useState } from 'react';
 import './App.css';
 
 const Tile = (props) => {
+  // const [counter, setCounter] = useState(0)
+  const [isHidden, setIsHidden] = useState(true)
   return (
     <div className="Tile">
       <h1>{props.letter}</h1>
-      <h2>{props.value}</h2>
-      <h2>{props.isHidden}</h2>
+      {/* <h2>{props.value}</h2> */}
+      <p>{props.value}</p>
+      <button
+        onClick={() => setIsHidden(!isHidden)}>
+          {isHidden ? 'Hidden' : 'Revealed'}
+      </button>
     </div>
   )
 }
@@ -31,7 +38,10 @@ const TileSet = (props) => {
   return (
     <>
       should return all tiles and display them randomly
-      <Tile />
+      <Tile
+        letter = 'X'
+        value = {8}
+      />
     </>
   )
 }
