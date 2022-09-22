@@ -98,6 +98,3 @@ const setDefautValues = () => {
         
     });
 };
-
-setDefautValues()
-console.log(tileset)
