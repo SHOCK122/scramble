@@ -1,8 +1,12 @@
-/* .App {
+body {
+  background-color: rgb(200, 200, 200);
+}
+
+.App {
   text-align: center;
 }
 
-.App-logo {
+/*.App-logo {
   height: 40vmin;
   pointer-events: none;
 } */
@@ -38,20 +42,46 @@
 }
 
 .Tile {
+  text-align: center;
   background-color: rgb(113, 0, 32);
-  width: 8em;
-  height: 8em;
+  width: 6em;
+  height: 6em;
   display: flex;
   flex-direction: column;
   justify-content: space-around;
+  align-items: center;
+  margin: .5em;
 }
 
 .Letter {
-  color: rgb(239, 199, 0);
+  color: rgb(255, 232, 174);
+}
+
+.Word {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.Words {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+.Points {
+  color: rgb(255, 232, 174);
 }
 
 .TileSet {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+.Board {
+  margin: 1em;
 }

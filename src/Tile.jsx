@@ -11,7 +11,7 @@ const Tile = ({letter, value}) => {
         '' :
         <div className="Tile-content">
           <h1 className="Letter">{letter}</h1>
-          <h3>{value}</h3>
+          <h3 className="Points">{value}</h3>
         </div>
       }
     </div>

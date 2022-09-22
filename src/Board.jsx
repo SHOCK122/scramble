@@ -7,7 +7,7 @@ const Board = (props) => {
     <div className="Board">
       <TileSet />
       <Hand
-        playerName='SHOCK'
+        playerName='Player Name'
         playerWords='should be list of word components that display words that belong to player'
       />
     </div>
