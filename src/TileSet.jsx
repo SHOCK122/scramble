@@ -1,13 +1,7 @@
-import { useEffect, useState } from 'react';
+import React from 'react';
 import Tile from './Tile'
-import setDefautValues from './tiles'
 
-const TileSet = (props) => {
-  let tileset = {
-    'blank': { 'pts': 0, 'qty': 2 }
-  };
-
-  tileset = setDefautValues(tileset)
+const TileSet = ({ tileset }) => {
   const tilesArray = []
   for (const tile in tileset) {
     for (let i = 0; i < tileset[tile].qty; i++) {
@@ -15,6 +9,7 @@ const TileSet = (props) => {
         <Tile
           letter={tile}
           value={tileset[tile].pts}
+          hide={true}
         />
       )
     }

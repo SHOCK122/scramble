@@ -1,20 +1,30 @@
-import React from "react";
+import { useState, useEffect } from "react"
 import Word from "./Word"
 
-const Hand = (props) => {
-  const words = [
-    'these',
-    'are',
-    'sample',
-    'words'
-  ];
+const Hand = ({tileset, playerWords, playerName}) => {
+  const [total, setTotal] = useState(0)
+  let totalScore = 0
+  playerWords.map((word) => {
+    word.split("").map((letter) => {
+      letter = letter.toUpperCase()
+      const letterScore = tileset[letter].pts
+      totalScore += letterScore
+    })
+  })
+  useEffect(() => {
+    setTotal(totalScore)
+  })
   return (
     <div className="Hand">
-      <h1>{props.playerName}</h1>
+      <h1>{playerName}</h1>
+      <h2>Total: {total} points</h2>
       <div className="Words">
         {
-          words.map((word) => (
-            <Word word={word} />
+          playerWords.map((word) => (
+            <Word
+              word={word.toUpperCase()}
+              tileset={tileset}
+            />
           ))
         }
       </div>
@@ -22,4 +32,4 @@ const Hand = (props) => {
   )
 }
 
-export default Hand;
+export default Hand
