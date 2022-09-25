@@ -1,11 +1,14 @@
 import { useState } from 'react'
 
-const Tile = ({letter, value, hide}) => {
+const Tile = ({letter, value, hide, tileset}) => {
   const [isHidden, setIsHidden] = useState(true)
   return (
     <div
       className="Tile"
-      onClick={() => setIsHidden((prevIsHidden) => false)}
+      onClick={() => {
+        setIsHidden(false)
+        tileset[letter].revealed += 1
+      }}
     >
       {(isHidden && hide) ?
         '' :

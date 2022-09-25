@@ -47,7 +47,7 @@ const setDefautValues = (tileset) => {
   Array.from(Array(26)).map((e, i) => {
     const char = i + 65 //start at A
     const letter = String.fromCharCode(char)
-    tileset[letter] = { 'pts': null, 'qty': null }
+    tileset[letter] = { 'pts': null, 'qty': null, revealed: 0}
     const tile = tileset[letter]
     if (['D', 'G'].includes(letter)) {
       tile.pts = 2;
