@@ -9,6 +9,7 @@ class Scramble {
         this.revealedTiles = [];
         this.DICTIONARY = dictionary;
         this.PLAYERS = {};
+        this.numPlayers = numPlayers;
         this.setPlayers(numPlayers);
         this.#createDefaultTemplate();
         this.#tilesToArray();
@@ -19,7 +20,7 @@ class Scramble {
     setPlayers = (num) => {
         const oldNum = this.numPlayers;
         this.numPlayers = num;
-        if (num > oldNum) {
+        if (num >= oldNum) {
             for (let i = 1; i <= this.numPlayers; i++) {
                 this.PLAYERS[i] = [];
             }
@@ -122,9 +123,13 @@ class Scramble {
     #anagramCheck = (target, prefix) => {
         const end = prefix.length
         if (target.length >= end) {
-            let a = target.substring(0, end).split('').sort().join('');
-            let b = prefix.split('').sort().join('');
-            return a === b
+            const toScan = target.split('').sort().join('');
+            //scan through a with a b.length length window and compare to b
+            const reference = prefix.split('').sort().join('');
+            for (let i = 0; i + end < toScan.length; i ++) {
+                let frame = toScan.substring(i, i + end)
+                if (frame === reference) return toScan.replace(frame,'');
+            }
         }
         return false;
     }
@@ -137,13 +142,13 @@ class Scramble {
         for (let p = 0; p < wordBanks.length; p++) {
             for (let w = 0; w < wordBanks[p].length; w++) {
                 const word = wordBanks[p][w];
-                if (this.#anagramCheck(target, word)) {
-                    let updatedBank = wordBanks[p].slice(0, w).concat(wordBanks[p].slice(w+1))
-                    let updatedBanks = wordBanks.slice(0, p).concat([updatedBank]).concat(wordBanks.slice(p+1))
-                    const suffix = target.slice(word.length)
-                    let suffixWays = this.#allConstruct(suffix, updatedBanks, memo)
-                    let targetWays = suffixWays.map(w => [[p, word], ...w])
-                    ways.push(...targetWays)
+                const anagram = this.#anagramCheck(target, word);
+                if (anagram) {
+                    let updatedBank = this.#exciseFromArray(wordBanks[p], w);
+                    let updatedBanks = wordBanks.slice(0, p).concat([updatedBank]).concat(wordBanks.slice(p+1));
+                    let anagramWays = this.#allConstruct(anagram, updatedBanks, memo);
+                    let targetWays = anagramWays.map(w => [[p, word], ...w]);
+                    ways.push(...targetWays);
                 }
             }
         }
@@ -163,6 +168,7 @@ class Scramble {
     }
 
     #constructWord = (choiceArray) => {
+        console.log(`constructing word ${choiceArray}`);
         let word = ''
         for (const tuple of choiceArray) {
             const [player, fragment] = tuple
@@ -175,6 +181,7 @@ class Scramble {
                 this.PLAYERS[player] = this.#exciseFromArray(this.PLAYERS[player], fragIdx)
             }
         }
+        console.log(`word: ${word}`);
         return word
     }
 
@@ -185,6 +192,7 @@ class Scramble {
     // default taking last choice in list of choices.
     // to do: pass choiceArray to takeWord().
     takeWord = (choice, player) => {
+        console.log(`taking word ${choice} for ${player}`)
         if (choice.length > 0) {
             const word = this.#constructWord(choice);
             this.#giveWord(word, player);
@@ -195,7 +203,7 @@ class Scramble {
         if (this.#isValidWord(word)) {
             word = word.toUpperCase();
             const choices = this.#allConstruct(word);
-            console.log(choices);
+            for (const choice of choices) console.log(choice);
             return choices;
         }
         return [];
@@ -216,28 +224,16 @@ class Scramble {
     beginPlay = () => {
         let numPlayers, userInput;
 
-        numPlayers = prompt('How many players?')
+        numPlayers = prompt('How many players?',1)
         numPlayers > 0 ? this.setPlayers(numPlayers) : this.setPlayers(1);
         console.log(`Number of players: ${numPlayers}`)
         this.isGameOngoing = true;
-        console.log('Valid commands: "-help", "-quit", "-players", "-scores", "-tiles", "-hands"');
+        console.log('Valid commands: "-help", "-quit", "-players", "-scores", "-tiles"');
         while (this.isGameOngoing) {
-            prompt('Flipping a random tile...');
+            alert('Flipping a random tile...');
             this.revealTile();
             this.showPlayerHands();
-            userInput = prompt('What word would you like to take?');
-            userInput = userInput.toUpperCase();
-            let selectedIdx = 0
-            let choices = null;
-            while (choices === null) {
-                choices = this.handleInput(userInput);
-                console.log(choices.length)
-                choices.length > 0 ?
-                    choices.length === 1 ?
-                        this.takeWord(selectedIdx, this.currentPlayer) :
-                        selectedIdx = prompt('Which way would you like to form the word?') :
-                    console.log(`'${userInput}' is not a valid word. Passed play to Player ${this.passPlay()}`);
-            }
+            this.handleInput();
         }
     }
 
@@ -253,8 +249,32 @@ class Scramble {
         }
     }
 
-    handleInput = (userInput) => {
-        let choices = null;
+    handleInput = () => {
+        let selectedIdx = -1
+        let choices = [];
+        while (choices.length < 1) {
+            const userInput = prompt('What word would you like to take?','');
+            choices = this.inputSwitch(userInput);
+            console.log(choices)
+            if (choices.length === 1) {
+                if (choices[0] === null) continue;
+                else this.takeWord(choices[0], this.currentPlayer);
+            }
+            else if (choices.length > 1) {
+                while (selectedIdx >= choices.length || selectedIdx < 0) {
+                        selectedIdx = prompt('Which way would you like to form the word?', 0)
+                    }
+            }
+            else {
+                console.log(`'${userInput}' is not a valid word. Passed play to Player ${this.passPlay()}`);
+                this.passPlay();
+                choices = [null];
+            }
+        }
+    }
+
+    inputSwitch = (userInput) => {
+        let choices = [null];
         switch (userInput) {
             case '-quit':
             case '-q':
@@ -267,7 +287,7 @@ class Scramble {
             case '-players':
             case '-p':
                 let numPlayers = prompt('Number of players?')
-                this.setplayers(numPlayers);
+                this.setPlayers(numPlayers);
                 break;
             case '-scores':
             case '-s':
@@ -280,51 +300,37 @@ class Scramble {
                 console.log(this.revealedTiles);
                 break;
             case '':
+            case null:
                 this.passPlay();
                 console.log(`Passing to Player ${this.currentPlayer}.`);
                 break;
             default:
                 choices = this.presentChoices(userInput);
-                console.log(choices); //make this pretty, later.
                 break;
         }
         return choices
     }
     
     mockup = () => {
-        this.PLAYERS[1].push('L')
-        this.PLAYERS[1].push('AL')
-        this.PLAYERS[1].push('W')
-        this.PLAYERS[1].push('A')
-        this.PLAYERS[2].push('W')
-        this.PLAYERS[2].push('L')
-        this.PLAYERS[2].push('AW')
+        this.setPlayers(4);
+        this.revealedTiles = ['D', 'E', 'E', 'N', 'O', 'O', 'R', 'S', 'T', 'U', 'V']
+        this.PLAYERS[4] = [
+            "SALE",
+            "JADE"
+        ]
+        this.presentChoices('snore');
+        this.presentChoices('salve');
     }
 
 }
 
-export default Scramble;
+//export default Scramble;
 
-// const game = new Scramble(3);
-// game.beginPlay();
-// console.log(game.TILESET);
-// game.mockup();
-// game.revealTile()
-// game.revealTile()
-// game.revealTile()
-// console.log(game.PLAYERS)
-// let word = game.presentChoices('law')
-// game.takeWord(word[word.length - 1], 3)
-// //console.log(game.PLAYERS)
-// word = game.presentChoices('wall')
-// game.takeWord(word[0], 1)
-// console.log(game.PLAYERS)
-// game.calcPlayerScore()
-// game.calcPlayerScore(2)
+const game = new Scramble(3);
+game.mockup();
 
 /*----------------------------------------------------------------
 // todo:
-// - calculate player scores
 // - take user input.
 // - pick from choices of all construct
 // num key to reveal UP TO that many tiles (custome rule)
