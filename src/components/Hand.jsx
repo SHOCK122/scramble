@@ -20,10 +20,11 @@ const Hand = ({tileset, playerWords, playerName}) => {
       <h2>Total: {total} points</h2>
       <div className="Words">
         {
-          playerWords.map((word) => (
+          playerWords.map((word, idx) => (
             <Word
               word={word.toUpperCase()}
               tileset={tileset}
+              key={`HandWord${playerName}${idx}`}
             />
           ))
         }

@@ -13,6 +13,7 @@ const TileSet = ({ tileset }) => {
           value={tileset[tile].pts}
           hide={true}
           tileset={tileset}
+          key = {`TilesetTile${tile}${i}`}
         />
       )
     }

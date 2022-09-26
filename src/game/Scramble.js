@@ -1,4 +1,4 @@
-const scrabbleDict = require('./scrab_dict.json')
+const scrabbleDict = require('./scrab_dict.json');
 
 class Scramble {
     constructor(numPlayers = 1, dictionary = scrabbleDict) {
@@ -8,13 +8,23 @@ class Scramble {
         this.hiddenTiles = [];
         this.revealedTiles = [];
         this.DICTIONARY = dictionary;
-        this.numPlayers = numPlayers;
         this.PLAYERS = {};
-        for (let i = 1; i <= this.numPlayers; i++) {
-            this.PLAYERS[i] = [];
-        }
+        this.setPlayers(numPlayers);
         this.#createDefaultTemplate();
         this.#tilesToArray();
+        this.isGameOngoing = false;
+        this.currentPlayer = 1;
+    }
+
+    setPlayers = (num) => {
+        const oldNum = this.numPlayers;
+        this.numPlayers = num;
+        if (num > oldNum) {
+            for (let i = 1; i <= this.numPlayers; i++) {
+                this.PLAYERS[i] = [];
+            }
+        }
+        return this.numPlayers;
     }
     
     #createDefaultTemplate = () => {
@@ -141,16 +151,6 @@ class Scramble {
         return ways
     }
 
-    mockup = () => {
-        this.PLAYERS[1].push('L')
-        this.PLAYERS[1].push('AL')
-        this.PLAYERS[1].push('W')
-        this.PLAYERS[1].push('A')
-        this.PLAYERS[2].push('W')
-        this.PLAYERS[2].push('L')
-        this.PLAYERS[2].push('AW')
-    }
-
     #takeTile = (tile) => {
         tile = tile.toUpperCase();
         const tileIdx = this.revealedTiles.indexOf(tile)
@@ -163,43 +163,164 @@ class Scramble {
     }
 
     #constructWord = (choiceArray) => {
+        let word = ''
         for (const tuple of choiceArray) {
-            const [player, word] = tuple
+            const [player, fragment] = tuple
+            word = word + fragment;
             if (player === 0) {
-                this.#takeTile(tuple[1]);
+                this.#takeTile(fragment);
             }
             else {
-                const wordIdx = this.PLAYERS[player].indexOf(word)
-                this.PLAYERS[player] = this.#exciseFromArray(this.PLAYERS[player], wordIdx)
+                const fragIdx = this.PLAYERS[player].indexOf(fragment)
+                this.PLAYERS[player] = this.#exciseFromArray(this.PLAYERS[player], fragIdx)
             }
         }
+        return word
     }
 
     #giveWord = (word, player) => {
-        word = word.toUpperCase();
         this.PLAYERS[player].push(word);
     }
 
-    takeWord = (word, player) => {
-        const choices = this.#allConstruct(word);
-        if (choices.length > 0 && this.#isValidWord(word)) {
-            this.#constructWord(choices[choices.length-1]);
+    // default taking last choice in list of choices.
+    // to do: pass choiceArray to takeWord().
+    takeWord = (choice, player) => {
+        if (choice.length > 0) {
+            const word = this.#constructWord(choice);
             this.#giveWord(word, player);
         }
     }
+
+    presentChoices = word => {
+        if (this.#isValidWord(word)) {
+            word = word.toUpperCase();
+            const choices = this.#allConstruct(word);
+            console.log(choices);
+            return choices;
+        }
+        return [];
+    }
+    
+    calcPlayerScore = (player = 1) => {
+        let score = 0;
+        const playerHand = this.PLAYERS[player]
+        for (const word of playerHand) {
+            for (const letter of word.split('')) {
+                score += this.TILESET[letter].pts;
+            }
+        }
+        console.log(score);
+        return score;
+    }
+
+    beginPlay = () => {
+        let numPlayers, userInput;
+
+        numPlayers = prompt('How many players?')
+        numPlayers > 0 ? this.setPlayers(numPlayers) : this.setPlayers(1);
+        console.log(`Number of players: ${numPlayers}`)
+        this.isGameOngoing = true;
+        console.log('Valid commands: "-help", "-quit", "-players", "-scores", "-tiles", "-hands"');
+        while (this.isGameOngoing) {
+            prompt('Flipping a random tile...');
+            this.revealTile();
+            this.showPlayerHands();
+            userInput = prompt('What word would you like to take?');
+            userInput = userInput.toUpperCase();
+            let selectedIdx = 0
+            let choices = null;
+            while (choices === null) {
+                choices = this.handleInput(userInput);
+                console.log(choices.length)
+                choices.length > 0 ?
+                    choices.length === 1 ?
+                        this.takeWord(selectedIdx, this.currentPlayer) :
+                        selectedIdx = prompt('Which way would you like to form the word?') :
+                    console.log(`'${userInput}' is not a valid word. Passed play to Player ${this.passPlay()}`);
+            }
+        }
+    }
+
+    passPlay = () => {
+        this.currentPlayer = (this.currentPlayer % this.numPlayers) + 1;
+        return this.currentPlayer;
+    }
+
+    showPlayerHands = () => {
+        for (const player in this.PLAYERS) {
+            const hand = this.PLAYERS[player];
+            console.log(`Player ${player} (${this.calcPlayerScore(player)} points): ${hand}`)
+        }
+    }
+
+    handleInput = (userInput) => {
+        let choices = null;
+        switch (userInput) {
+            case '-quit':
+            case '-q':
+                this.isGameOngoing = false;
+                break;
+            case '-help':
+            case '-h':
+                console.log('Valid commands: "-help", "-quit", "-players", "-scores", "-tiles"');
+                break;
+            case '-players':
+            case '-p':
+                let numPlayers = prompt('Number of players?')
+                this.setplayers(numPlayers);
+                break;
+            case '-scores':
+            case '-s':
+            case '-playerhands':
+            case '-ph':
+                this.showPlayerHands();
+                break;
+            case '-tiles':
+            case '-t':
+                console.log(this.revealedTiles);
+                break;
+            case '':
+                this.passPlay();
+                console.log(`Passing to Player ${this.currentPlayer}.`);
+                break;
+            default:
+                choices = this.presentChoices(userInput);
+                console.log(choices); //make this pretty, later.
+                break;
+        }
+        return choices
+    }
+    
+    mockup = () => {
+        this.PLAYERS[1].push('L')
+        this.PLAYERS[1].push('AL')
+        this.PLAYERS[1].push('W')
+        this.PLAYERS[1].push('A')
+        this.PLAYERS[2].push('W')
+        this.PLAYERS[2].push('L')
+        this.PLAYERS[2].push('AW')
+    }
+
 }
 
+export default Scramble;
+
 // const game = new Scramble(3);
-// console.log(game.hiddenTiles);
+// game.beginPlay();
+// console.log(game.TILESET);
 // game.mockup();
 // game.revealTile()
 // game.revealTile()
 // game.revealTile()
 // console.log(game.PLAYERS)
-// game.takeWord('law', 3)
+// let word = game.presentChoices('law')
+// game.takeWord(word[word.length - 1], 3)
+// //console.log(game.PLAYERS)
+// word = game.presentChoices('wall')
+// game.takeWord(word[0], 1)
 // console.log(game.PLAYERS)
-// game.takeWord('wall', 1)
-// console.log(game.PLAYERS)
+// game.calcPlayerScore()
+// game.calcPlayerScore(2)
 
 /*----------------------------------------------------------------
 // todo:
